@@ -1,4 +1,7 @@
 // BubbleFit.psjs  -  fits TypeR text into speech bubbles (English + Arabic)
+// v1.6 (14 Nov 2026) - centring first: when the text is at the bubble's limit, v1.5 could slide it off-centre (e.g. up towards a joined
+//   bubble) to squeeze in a bigger size. Now it keeps the largest size that still fits EXACTLY on the bubble's centre, giving up to
+//   centreGive (12%) of size for that; only a bubble that cannot hold the text centred at all lets it move.
 // v1.5 (14 Nov 2026) - reader's view: on one page the same font keeps one size (your pages: 90% of speech within -7%/+4% of the page median;
 //   v1.4 ranged 0.64x-1.69x). Big bubbles no longer get huge text - the text stays at the page size with more air; a bubble too small
 //   for that size still obeys the SS rule and is reported in the log (shorten the lines or add tatweel there).
@@ -635,6 +638,16 @@ BF.plan = function (img, texts, cfg, log) {
     var capS = cfg.pageBand >= 0 ? tgt * (1 + cfg.pageBand) / T.fontPx : 1e9;   // v1.5: the tight fit may not go past the page size either
     if (J.tight && s < 1) { var st = Math.min(1, capS, (cfg.fillTight || 0.97) * J.sTight); if (st > s) { s = st; fz = J.tight; } }
     if (s < cfg.hardMin) s = Math.min(cfg.hardMin, J.tight ? J.sTight : J.sFit);
+    // v1.6 centring first: the biggest scale <= s that fits exactly on the centre; take it if it costs at most centreGive of the size
+    var gx = J.field.cx, gy = J.field.cy;
+    if (cfg.centreGive > 0 && fz.margin(gx, gy, s, -1e9) < 0) {
+      var lo = s * (1 - cfg.centreGive), hi = s;
+      if (fz.margin(gx, gy, lo, -1e9) >= 0) {
+        for (var it = 0; it < 14; it++) { var md = (lo + hi) / 2; if (fz.margin(gx, gy, md, -1e9) >= 0) lo = md; else hi = md; }
+        if (cfg._log) cfg._log.push((T.name || T.id) + ': kept centred (' + Math.round(s * T.fontPx) + ' -> ' + Math.round(lo * T.fontPx) + ' px)');
+        s = lo;
+      }
+    }
     return { s: s, fz: fz };
   }
   function boxOf(J, s, pos) {
@@ -689,6 +702,7 @@ if (typeof module !== 'undefined') module.exports = BF;
 //  - One Ctrl+Z undoes everything.  Text that is not inside a closed bubble (SFX, text on art) is left alone.
 var SETTINGS = {
   ssRule: true,       // v1.3: the margin right and left of every line = the width of "SS" (English) / "سس" (Arabic) at the text's own size
+  centreGive: 0.12,   // v1.6: give up to 12% of the size to keep the text exactly centred in its bubble (0 = v1.5 behaviour)
   pageBand: 0.05,     // v1.5 reader's view: same font = same size on the page, within +-5% (your own pages). -1 = off (v1.4 behaviour)
   ssScale: 0.8,       // v1.4: the imagined SS / سس counts at 80% of its measured width (matches your own pages: ~1.1 em per side)
   ssVert: 0.15,       // top and bottom gap = this part of the SS width (v1.4: 0.15; v1.3 used 0.5 and made text too small)
