@@ -8,6 +8,9 @@ A Photoshop 2025 script that fits your typeset text into its speech bubble, for 
 - Centres on the letters, not the tashkeel, and ignores the tail.
 - Keeps your line breaks and shape (diamond / oval, tatweel): it only scales and moves the text.
 
+## Video tutorial
+[▶ Watch: BubbleFit v1.3 tutorial (50 s, English + Arabic)](docs/video/BubbleFit_v1.3_tutorial.mp4) — 3 steps, single and joined bubbles, the SS / سس rule.
+
 ## Use
 1. Download `BubbleFit.psjs`.
 2. Typeset with TypeR at a large size (over 75 px).
