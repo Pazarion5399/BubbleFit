@@ -1,4 +1,9 @@
 // BubbleFit.psjs  -  fits TypeR text into speech bubbles (English + Arabic)
+// v1.5 (14 Nov 2026) - reader's view: on one page the same font keeps one size (your pages: 90% of speech within -7%/+4% of the page median;
+//   v1.4 ranged 0.64x-1.69x). Big bubbles no longer get huge text - the text stays at the page size with more air; a bubble too small
+//   for that size still obeys the SS rule and is reported in the log (shorten the lines or add tatweel there).
+// v1.4 (14 Nov 2026) - SS margin calibrated on the user's own pages: their middle-line gap is ~1.1 em while the measured width of
+//   "سس" in Hayah is 1.39 em, so the imagined letters count at 80% (ssScale). Top/bottom gap 15% of it (v1.3: 50%).
 // v1.3 (14 Nov 2026) - the SS / سس rule: the side margin of every line is the width of "SS" (English) or "سس" (Arabic) in the text's own
 //   font and size, measured in Photoshop; the text grows until those imagined letters touch the bubble edge (never closer).
 //   Works with any active tool (Magic Wand, brushes...): switches to the Move tool while it runs, then gives your tool back.
@@ -580,7 +585,7 @@ BF.assign = function (B, log) {
 };
 
 BF.prepFit = function (B, T, field, cfg) {
-  var ss = cfg.ssRule && T.ssEm > 0, sidePx = ss ? T.ssEm * T.fontPx : 0, vertPx = ss ? cfg.ssVert * sidePx : 0;
+  var ss = cfg.ssRule && T.ssEm > 0, sidePx = ss ? (cfg.ssScale || 1) * T.ssEm * T.fontPx : 0, vertPx = ss ? cfg.ssVert * sidePx : 0;
   var f = B.wm.f, pts = BF.inkPoints(T.ink.alpha, T.ink.w, T.ink.h, f, ss ? 420 : 260, T.cx - T.ink.ox, T.cy - T.ink.oy, sidePx, vertPx);
   if (!pts) return null;
   var soft = (cfg.useSoft === false ? 0 : (B.soft || 0)), padMinA = (cfg.padMinEm || 0.08) * T.fontPx / f;
@@ -595,7 +600,7 @@ BF.prepFit = function (B, T, field, cfg) {
 };
 
 BF.plan = function (img, texts, cfg, log) {
-  cfg = cfg || BF.CFG; var ws = {}, bubbles = [], plans = [], jobs = [];
+  cfg = cfg || BF.CFG; cfg._log = log; var ws = {}, bubbles = [], plans = [], jobs = [];
   var sorted = texts.slice().sort(function (a, b) { return (b.target ? 1 : 0) - (a.target ? 1 : 0) || a.order - b.order; });
   sorted.forEach(function (T) {
     for (var i = 0; i < bubbles.length; i++) if (BF.inside(bubbles[i], T.cx, T.cy) && !BF.lobeIsOpen(bubbles[i], BF.lobeAt(bubbles[i], T.cx, T.cy))) { bubbles[i].members.push(T); return; }
@@ -621,12 +626,14 @@ BF.plan = function (img, texts, cfg, log) {
   // one common size per font: the typical best size on the page; small bubbles shrink only as much as needed
   var groups = {};
   // (ratio to the style size, so a bigger style of the same font stays bigger; lower median = stable on re-runs)
-  jobs.forEach(function (J) { var k = J.T.fontKey || '?'; (groups[k] = groups[k] || []).push(J.maxPx / J.T.fontPx); });
+  jobs.forEach(function (J) { var k = J.T.fontKey || '?'; (groups[k] = groups[k] || []).push(cfg.pageBand >= 0 ? J.maxPx : J.maxPx / J.T.fontPx); });
   var target = {};
-  Object.keys(groups).forEach(function (k) { var a = groups[k].slice().sort(function (x, y) { return x - y; }); target[k] = cfg.consistent ? a[Math.floor((a.length - 1) / 2)] : 1e9; });
+  Object.keys(groups).forEach(function (k) { var a = groups[k].slice().sort(function (x, y) { return x - y; }); target[k] = (cfg.consistent || cfg.pageBand >= 0) ? a[Math.floor((a.length - 1) / 2)] : 1e9; });
   function sizeFor(J, tgt) {
-    var T = J.T, px = Math.min(tgt * T.fontPx, J.maxPx, cfg.maxScale * T.fontPx), s = px / T.fontPx, fz = J.fitter;
-    if (J.tight && s < 1) { var st = Math.min(1, (cfg.fillTight || 0.97) * J.sTight); if (st > s) { s = st; fz = J.tight; } }
+    var T = J.T, px = Math.min(cfg.pageBand >= 0 ? tgt * (1 + cfg.pageBand) : tgt * T.fontPx, J.maxPx, cfg.maxScale * T.fontPx), s = px / T.fontPx, fz = J.fitter;
+    if (cfg.pageBand >= 0 && J.maxPx < tgt * (1 - cfg.pageBand) && cfg._log) cfg._log.push((T.name || T.id) + ': bubble too small for the page size (' + Math.round(J.maxPx) + ' px vs ' + Math.round(tgt) + ' px) - shorten the lines or add tatweel');
+    var capS = cfg.pageBand >= 0 ? tgt * (1 + cfg.pageBand) / T.fontPx : 1e9;   // v1.5: the tight fit may not go past the page size either
+    if (J.tight && s < 1) { var st = Math.min(1, capS, (cfg.fillTight || 0.97) * J.sTight); if (st > s) { s = st; fz = J.tight; } }
     if (s < cfg.hardMin) s = Math.min(cfg.hardMin, J.tight ? J.sTight : J.sFit);
     return { s: s, fz: fz };
   }
@@ -682,7 +689,9 @@ if (typeof module !== 'undefined') module.exports = BF;
 //  - One Ctrl+Z undoes everything.  Text that is not inside a closed bubble (SFX, text on art) is left alone.
 var SETTINGS = {
   ssRule: true,       // v1.3: the margin right and left of every line = the width of "SS" (English) / "سس" (Arabic) at the text's own size
-  ssVert: 0.5,        // top and bottom gap = this part of that width (0.5 = half of "SS")
+  pageBand: 0.05,     // v1.5 reader's view: same font = same size on the page, within +-5% (your own pages). -1 = off (v1.4 behaviour)
+  ssScale: 0.8,       // v1.4: the imagined SS / سس counts at 80% of its measured width (matches your own pages: ~1.1 em per side)
+  ssVert: 0.15,       // top and bottom gap = this part of the SS width (v1.4: 0.15; v1.3 used 0.5 and made text too small)
   ssTouchEm: 0.04,    // the imagined SS letters may come this close to the bubble line, never touching it
   ssFill: 1.0,        // fill the bubble right up to the SS margin (not smaller)
   padEm: 0.42,        // space between text and bubble edge, in "font size" units (bigger = more air)
