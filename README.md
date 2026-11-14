@@ -6,11 +6,12 @@ A Photoshop 2025 script that fits your typeset text into its speech bubble, for 
 - Finds the bubble around each text and splits joined bubbles at their necks.
 - **SS / سس rule:** imagine "SS" (English) or "سس" (Arabic), at the text's own size, right and left of every line. That gap is the margin to the bubble edge. BubbleFit fills the bubble right up to that margin: not smaller, never touching.
 - **Reader's view (v1.5):** on one page the same font keeps one size (within ±5%). A big bubble gets the page size with more air, not huge text. A bubble too small for that size keeps the SS margin and is listed in the log: shorten the lines or add tatweel there.
+- **Centring first (v1.6):** when a text is at its bubble's limit it keeps the largest size that fits exactly on the centre (giving up to 12% of size, `centreGive`) instead of sliding off-centre.
 - Centres on the letters, not the tashkeel, and ignores the tail.
 - Keeps your line breaks and shape (diamond / oval, tatweel): it only scales and moves the text.
 
 ## Video tutorial
-[▶ Watch: BubbleFit v1.5 tutorial (English + Arabic)](docs/video/BubbleFit_v1.5_tutorial.mp4) — 3 steps, single and joined bubbles, the SS / سس rule, one size per page.
+[▶ Watch: BubbleFit v1.6 tutorial (English + Arabic)](docs/video/BubbleFit_v1.6_tutorial.mp4) — 3 steps, single and joined bubbles, the SS / سس rule, one size per page.
 
 Older: [v1.3 tutorial](docs/video/BubbleFit_v1.3_tutorial.mp4).
 

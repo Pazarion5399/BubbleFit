@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6 (14 Nov 2026)
+- **Centring first.** v1.5 could slide a text off the bubble's centre to fit a slightly bigger size (seen on a joined bubble: 22 px above centre). Now BubbleFit keeps the largest size that fits exactly on the centre, giving up to 12% of size for it (`centreGive`, 0 = old behaviour). Same bubble: 22 px off → 4 px off, size 57 → 56 px. On two test pages 23 texts were re-centred, most losing 0–2 px.
+
 ## v1.5 (14 Nov 2026)
 - **Reader's view:** text that is too big or too small looks wrong to the reader. On one page the same font now keeps one size: the median of the page, within ±5% (`pageBand`). Measured on Grimoire 12 page 05: Hayah sizes went from 0.84–1.54× to 0.84–1.05× of the median; size vs the editor's own finished pages 0.99× and 0.91×.
 - Big bubbles get the page size with more air instead of huge text. A bubble too small for the page size keeps the SS margin (the text is never squeezed) and the log says "shorten the lines or add tatweel".
