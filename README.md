@@ -11,7 +11,11 @@ A Photoshop 2025 script that fits your typeset text into its speech bubble, for 
 - Keeps your line breaks and shape (diamond / oval, tatweel): it only scales and moves the text.
 
 ## Video tutorial
-[▶ Watch: BubbleFit v1.6 tutorial (English + Arabic)](docs/video/BubbleFit_v1.6_tutorial.mp4) — 3 steps, single and joined bubbles, the SS / سس rule, one size per page.
+BubbleFit v1.6 tutorial (55 s, English + Arabic): 3 steps, single and joined bubbles, the SS / سس rule, one size per page, always centred.
+
+https://github.com/user-attachments/assets/f4641198-d303-462e-be8e-04128ac38129
+
+(Can't play it? [Download the video](docs/video/BubbleFit_v1.6_tutorial.mp4).)
 
 Older: [v1.3 tutorial](docs/video/BubbleFit_v1.3_tutorial.mp4).
 
